@@ -1,0 +1,17 @@
+# dataset
+data/
+
+# save
+save/
+old_save/
+
+#picture
+pic/
+
+# logs
+*.txt
+
+# others
+__pycache__/
+.vscode/
+networks/__pycache__/
