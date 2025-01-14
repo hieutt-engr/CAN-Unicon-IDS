@@ -13,8 +13,7 @@ import torch.nn.functional as F
 
 # from dataset import CANDatasetEnet as CANDataset
 from dataset import CANDataset
-from losses import UniConLoss ,FocalLoss, CenterLoss
-# from networks.resnet_big import ConResNet, LinearClassifier
+from losses import UniConLoss, CenterLoss
 from networks.efficient_net import ConEfficientNet, LinearClassifier
 from util import AverageMeter, save_model, get_universum, TwoCropTransform, AddGaussianNoise
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix, accuracy_score

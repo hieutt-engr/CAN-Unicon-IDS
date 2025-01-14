@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import os
 import math
 import random
@@ -10,6 +9,7 @@ import torch
 import datetime
 import numpy as np
 import pandas as pd
+
 import torch.optim as optim
 
 class TwoCropTransform:
@@ -109,7 +109,7 @@ def rand_bbox(size, lam):
     return bbx1, bby1, bbx2, bby2
 
 
-def get_universum_old(images, labels, opt):
+def get_universum_standard(images, labels, opt):
     """Calculating Mixup-induced universum from a batch of images"""
     tmp = images.cpu()
     label = labels.cpu()
@@ -135,55 +135,6 @@ def get_universum_old(images, labels, opt):
         universum[:, :, bbx1:bbx2, bby1:bby2] = images[:, :, bbx1:bbx2, bby1:bby2]
     return universum
 
-# def get_universum(images, labels, opt):
-#     """Calculating Mixup-induced universum from a batch of images, handling imbalanced data"""
-#     device = opt.device
- 
-#     images = images.to(device)
-#     labels = labels.to(device)
- 
-#     tmp = images.cpu()
-#     label = labels.cpu()
-#     bsz = tmp.shape[0]
-#     bs = len(label)
-#     # Chuẩn bị danh sách chứa các chỉ số của từng lớp
-#     class_images = [[] for _ in range(max(label).item() + 1)]
-#     for i in label.unique():
-#         class_images[i] = np.where(label != i)[0]  # Các chỉ số của lớp khác
-
-#     # Trọng số tỷ lệ nghịch với số lượng mẫu trong từng lớp
-#     class_counts = np.bincount(label.numpy())
-#     # weights = 1 / class_counts  # Trọng số ngược
-#     # probabilities = weights / weights.sum()  # Xác suất chọn từng lớp
-#     weights = np.where(class_counts > 0, 1 / class_counts, 0)  # Gán 0 cho lớp không có mẫu
-#     probabilities = weights / weights.sum()  # Chuẩn hóa trọng số thành xác suất
-
-#     # Chọn mẫu từ lớp khác dựa trên trọng số
-#     units = []
-#     for i in range(bsz):
-#         current_label = labels[i % bs]
-#         selected_class = random.choices(range(len(class_images)), probabilities)[0]  # Chọn lớp
-#         while selected_class == current_label.item():
-#             selected_class = random.choices(range(len(class_images)), probabilities)[0]  # Đảm bảo khác lớp hiện tại
-#         units.append(tmp[random.choice(class_images[selected_class])])
-
-#     universum = torch.stack(units, dim=0).to(device)
-#     lamda = opt.lamda
-
-#     if not hasattr(opt, 'mix') or opt.mix == 'mixup':
-#         # Sử dụng Mixup
-#         universum = lamda * universum + (1 - lamda) * images
-#     else:
-#         # Sử dụng CutMix
-#         lam = 0
-#         while lam < 0.45 or lam > 0.55:
-#             # Kiểm soát giá trị lambda trong khoảng [0.45, 0.55]
-#             bbx1, bby1, bbx2, bby2 = rand_bbox(images.size(), lamda)
-#             lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (images.size()[-1] * images.size()[-2]))
-#         universum[:, :, bbx1:bbx2, bby1:bby2] = images[:, :, bbx1:bbx2, bby1:bby2]
-
-#     return universum
-
 def get_universum(images, labels, opt):
     """Calculating Mixup- or CutMix-induced universum from a batch of images
     Args:
@@ -207,13 +158,11 @@ def get_universum(images, labels, opt):
 
     # Compute class counts and probabilities for balancing
     class_counts = [len(class_images[c]) for c in range(len(class_images))]
-    # weights = np.where(np.array(class_counts) > 0, 1 / np.array(class_counts), 0)
-    # probabilities = weights / weights.sum()  # Normalize to probabilities
-    epsilon = 1e-10  # Số cực nhỏ
+    epsilon = 1e-10
     class_counts = np.array(class_counts, dtype=float)
-    weights = 1 / (class_counts + epsilon)  # Thêm epsilon để tránh chia cho 0
+    weights = 1 / (class_counts + epsilon)  # Add epsilon to avoid division by zero
 
-    # Chuẩn hóa weights thành xác suất
+    # Normalize weights to probabilities
     if weights.sum() > 0:
         probabilities = weights / weights.sum()
     else:

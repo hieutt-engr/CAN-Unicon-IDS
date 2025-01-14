@@ -8,14 +8,14 @@ import time
 import numpy as np
 from tqdm import tqdm
 import pprint
-import torch.nn.functional as F
 from dataset import CANDataset
-from losses import CenterLoss
 from networks.rec_cnn import RecCNN
 from networks.lstm_cnn import LSTMCNN
 from networks.vision_trans import CEViT
 from util import AverageMeter, save_model
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix, accuracy_score
+
+import torch.nn.functional as F
 
 
 # === ARGUMENT PARSER === #
@@ -136,22 +136,22 @@ def episodic_training(train_loader, model, optimizer, opt, n_classes, n_way, k_s
     model.train()
     losses = AverageMeter()
     
-    batch_time = AverageMeter()  # Thời gian xử lý mỗi episode
-    data_time = AverageMeter()   # Thời gian xử lý dữ liệu
+    batch_time = AverageMeter()  # Time taken for each episode
+    data_time = AverageMeter()   # Time taken for data processing
     
-    end = time.time()  # Bắt đầu đo thời gian
+    end = time.time()  # Start timing
 
     for episode in range(len(train_loader)):
         data_time.update(time.time() - end) 
         
-        # Tạo batch Few-Shot
+        # Create Few-Shot batch
         few_shot_batch = create_few_shot_batch(train_loader.dataset, n_way, k_shot)
         
         if len(few_shot_batch) == 0:
             print("Few-shot batch is empty. Skipping episode.")
             continue
 
-        # Chuẩn hóa và kiểm tra batch
+        # Normalize and check the batch
         corrected_batch = []
         for i, (data, label) in enumerate(few_shot_batch):
             if isinstance(data, (list, tuple)):
@@ -163,11 +163,11 @@ def episodic_training(train_loader, model, optimizer, opt, n_classes, n_way, k_s
             else:
                 raise ValueError(f"Unexpected type for data: {type(data)}")
 
-        # Tách images và labels
+        # Separate images and labels
         images = torch.stack([item[0] for item in corrected_batch])
         labels = torch.tensor([item[1] for item in corrected_batch])
 
-        # Chuyển dữ liệu sang thiết bị
+        # Move data to device
         images = images.to(opt.device)
         labels = labels.to(opt.device)
 
@@ -199,12 +199,12 @@ def episodic_training(train_loader, model, optimizer, opt, n_classes, n_way, k_s
         loss.backward()
         optimizer.step()
 
-        # Cập nhật loss và thời gian
+        # Update loss and time
         losses.update(loss.item(), labels.size(0))
         batch_time.update(time.time() - end)
         end = time.time()
 
-        # Log thông tin mỗi episode
+        # Log episode information
         if (episode + 1) % opt.print_freq == 0:
             print(
                 f"Episode: [{episode + 1}/{len(train_loader)}]\t"
@@ -229,26 +229,26 @@ def train_encoder(train_loader, model, criterion, optimizer, epoch, opt):
     for idx, (images, labels) in enumerate(train_loader):
         data_time.update(time.time() - end)
         
-        # Đưa dữ liệu vào thiết bị (GPU/CPU)
+        # Move data to device (GPU/CPU)
         images = images.to(opt.device, non_blocking=True)
         labels = labels.to(opt.device, non_blocking=True)
         bsz = labels.shape[0]
 
-        # Tiến hành truyền dữ liệu qua mô hình
-        outputs = model(images)  # Phân loại trực tiếp từ mô hình
+        # Forward pass
+        outputs = model(images)  # Direct classification from the model
 
-        # Tính toán Cross-Entropy Loss
+        # Calculate Cross-Entropy Loss
         loss = criterion(outputs, labels)
 
-        # Cập nhật metric
+        # Update metric
         losses.update(loss.item(), bsz)
 
-        # Thực hiện bước tối ưu hóa
+        # Optimization step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        # Đo thời gian và in thông tin
+        # Measure time and print information
         batch_time.update(time.time() - end)
         end = time.time()
         if (idx + 1) % opt.print_freq == 0:
@@ -271,7 +271,7 @@ def get_predict(outputs):
     return pred
 
 def validate(val_loader, model, criterion, opt):
-    """validation"""
+    """Validation"""
     print("Classifier...")
     model.eval()
 
@@ -287,13 +287,13 @@ def validate(val_loader, model, criterion, opt):
             labels = labels.to(opt.device, non_blocking=True)
 
 
-            # forward
+            # Forward pass
             outputs = model(images)
             bsz = labels.size(0)
             loss = criterion(outputs, labels)
             losses.update(loss.item(), bsz)
 
-            # update metric
+            # Update metric
             pred = get_predict(outputs)
 
             if isinstance(pred, torch.Tensor):
@@ -305,7 +305,7 @@ def validate(val_loader, model, criterion, opt):
             total_pred = np.concatenate((total_pred, pred), axis=0)
             total_label = np.concatenate((total_label, labels), axis=0)
 
-            # measure elapsed time
+            # Measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
 

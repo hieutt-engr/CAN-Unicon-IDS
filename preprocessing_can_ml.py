@@ -1,8 +1,6 @@
 import pandas as pd
-# import vaex
 import numpy as np
 import glob
-import dask.dataframe as dd
 import json
 import math
 import csv
@@ -12,6 +10,10 @@ import tensorflow as tf
 from tqdm import tqdm
 import argparse
 import os
+import argparse
+
+# import vaex
+import dask.dataframe as dd
 
 can_ml_attributes = ['timestamp', 'arbitration_id', 'data_field', 'attack']
 
@@ -55,15 +57,15 @@ def normalize_timestamp(timestamp):
     Returns:
         numpy.ndarray: Normalized representation of timestamp values.
     """
-    # Step 1: Tính delta time
-    delta_time = timestamp - timestamp[0]  # Tính khoảng thời gian so với giá trị đầu tiên
+    # Step 1: Calculate delta time
+    delta_time = timestamp - timestamp[0]  # Calculate the time difference compared to the first value
     
     # Step 2: Min-Max Scaling
     min_val = np.min(delta_time)
     max_val = np.max(delta_time)
-    scaled = (delta_time - min_val) / (max_val - min_val)  # Chuẩn hóa giá trị trong khoảng [0, 1]
+    scaled = (delta_time - min_val) / (max_val - min_val)  # Normalize values in the range [0, 1]
     
-    # Step 3: Trả về giá trị đã chuẩn hóa (float)
+    # Step 3: Return the normalized values (float)
     return scaled
 
 def serialize_example(x, y): 
@@ -174,7 +176,6 @@ def main(indir, outdir, attacks, window_size, strided):
     print("DONE!")
 
 if __name__ == '__main__':
-    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--indir', type=str, default="./data/can-ml/2011-chevrolet-impala/merged")
     parser.add_argument('--outdir', type=str, default="./data/can-ml/2011-chevrolet-impala/preprocessed/all_features_30/TFRecord")

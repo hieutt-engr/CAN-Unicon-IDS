@@ -445,12 +445,9 @@ def main():
         print(f'Epoch {epoch}, Unicon Loss {train_loss:.4f}')
         log_writer.write(f'Epoch: {epoch}, Unicon Loss: {train_loss:.4f}\n')
 
-        class_epoch = epoch - opt.epoch_start_classifier + 1
         # Train and validate classifier 
-        # if class_epoch > 0:
         if epoch % opt.save_freq == 0:
             print("Train Classifier...")
-            # adjust_learning_rate(opt, optimizer_classifier, class_epoch, '_classifier')
             adjust_learning_rate(opt, optimizer_classifier, epoch, '_classifier')
             new_step, loss_ce, train_acc = train_classifier(train_classifier_loader, model, classifier, 
                                                             criterion_classifier, optimizer_classifier, epoch, opt, step, logger)

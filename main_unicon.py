@@ -21,7 +21,6 @@ from util import TwoCropTransform, AverageMeter, AddGaussianNoise
 from util import warmup_learning_rate
 from util import get_universum
 from util import save_model ,load_checkpoint, accuracy
-# from networks.classifier import LinearClassifier
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix, accuracy_score
 from torch.utils.tensorboard import SummaryWriter
 def parse_option():
@@ -234,16 +233,12 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, step):
     end = time.time()
 
     for idx, (images, labels) in enumerate(train_loader):
-        # images: a list of length 2，each element being a tensor of size [128, 3, 32, 32]
-        # labels: vector of length 128
         step += 1
         data_time.update(time.time() - end)
 
         image1, image2 = images[0], images[1]
         images = torch.cat([image1, image2], dim=0)
-        # if torch.cuda.is_available():
-        #     images = images.cuda(non_blocking=True)
-        #     labels = labels.cuda(non_blocking=True)
+
         images = images.to(opt.device, non_blocking=True)
         labels = labels.to(opt.device, non_blocking=True)
         bsz = labels.shape[0]
@@ -448,26 +443,20 @@ def main():
     for epoch in range(start_epoch, opt.epochs + 1):
         print('Begin time: ' + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())))
         adjust_learning_rate(opt, optimizer, epoch)
-        # train for one epoch
-        # time1 = time.time()
+
         new_step, train_loss = train(train_loader, model, criterion, optimizer, epoch, opt, step)
-        # time2 = time.time()
 
         print(f'Epoch {epoch}, Unicon Loss {train_loss:.4f}')
         log_writer.write(f'Epoch: {epoch}, Unicon Loss: {train_loss:.4f}\n')
 
         class_epoch = epoch - opt.epoch_start_classifier + 1
         # Train and validate classifier 
-        # if class_epoch > 0:
         if epoch % opt.save_freq == 0:
             print("Classifier...")
-            # adjust_learning_rate(opt, optimizer_classifier, class_epoch, '_classifier')
             adjust_learning_rate(opt, optimizer_classifier, epoch, '_classifier')
             new_step, loss_ce, train_acc = train_classifier(train_classifier_loader, model, classifier, 
                                                             criterion_classifier, optimizer_classifier, epoch, opt, step, logger)
             pp = pprint.PrettyPrinter(indent=4)
-            # print('Train Classifier: Loss: {:.4f}, Acc: {}'.format(loss_ce, train_acc))
-            # Log results
             log_writer.write('Classifier: Loss: {:.4f}, Acc: {}\n'.format(loss_ce, train_acc))
 
             loss, val_acc, val_f1, precision, recall, conf_matrix = validate(test_loader, model, classifier, criterion_classifier, opt)

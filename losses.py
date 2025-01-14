@@ -1,20 +1,21 @@
+from __future__ import print_function
+import torch
+
 """
 Author: Aiyang Han (aiyangh@nuaa.edu.cn)
 Date: May 24th, 2022
 """
-from __future__ import print_function
 
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-class UniConLoss_v1(nn.Module):
+class UniConLoss_Standard(nn.Module):
     """Universum-inspired Supervised Contrastive Learning: https://arxiv.org/abs/2204.10695"""
 
     def __init__(self, temperature=0.1, contrast_mode='all',
                  base_temperature=0.1):
-        super(UniConLoss_v1, self).__init__()
+        super(UniConLoss_Standard, self).__init__()
         self.temperature = temperature
         self.contrast_mode = contrast_mode
         self.base_temperature = base_temperature
@@ -29,10 +30,10 @@ class UniConLoss_v1(nn.Module):
         Returns:
             A loss scalar.
         """
-        # Lấy thiết bị từ `features`
+        # Get device from `features`
         device = features.device
 
-        # Kiểm tra và đồng bộ hóa thiết bị cho các tensor
+        # Check and synchronize device for tensors
         labels = labels.to(device)
         universum = universum.to(device)
 
@@ -47,7 +48,7 @@ class UniConLoss_v1(nn.Module):
         if labels.shape[0] != batch_size:
             raise ValueError('Num of labels does not match num of features')
 
-        # Đồng bộ hóa thiết bị cho `mask`
+        # Synchronize device for `mask`
         mask = torch.eq(labels, labels.T).float().to(device)
 
         contrast_count = features.shape[1]
@@ -178,9 +179,6 @@ class UniConLoss(nn.Module):
 
         return loss
 
-
-
-
 class SupConLoss(nn.Module):
     """This part is from the pytorch implementation of SupCon.
     Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
@@ -272,56 +270,15 @@ class SupConLoss(nn.Module):
 
         return loss
     
-# class FocalLoss(nn.Module):
-#     def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
-#         """
-#         Args:
-#             alpha (float or Tensor): Trọng số cho các lớp. Nếu là số, áp dụng đồng đều cho tất cả các lớp.
-#                                      Nếu là Tensor, kích thước phải khớp với số lớp.
-#             gamma (float): Tham số điều chỉnh trọng số cho các mẫu dễ và khó.
-#             reduction (str): Chế độ giảm loss, hỗ trợ 'mean', 'sum', và 'none'.
-#         """
-#         super(FocalLoss, self).__init__()
-#         if alpha is not None and not isinstance(alpha, (float, torch.Tensor)):
-#             raise TypeError("alpha must be float or Tensor")
-#         self.alpha = alpha
-#         self.gamma = gamma
-#         self.reduction = reduction
-
-#     def forward(self, inputs, targets):
-#         # Compute cross-entropy loss (no reduction)
-#         ce_loss = F.cross_entropy(inputs, targets, reduction='none')
-#         p_t = torch.exp(-ce_loss)  # p_t: probability of the true class
-
-#         # Handle alpha (class weights)
-#         if self.alpha is not None:
-#             if isinstance(self.alpha, torch.Tensor):
-#                 alpha_t = self.alpha[targets]  # Select alpha for each target class
-#             else:
-#                 alpha_t = self.alpha  # Single alpha value
-#         else:
-#             alpha_t = 1.0  # No weighting
-
-#         # Compute Focal Loss
-#         focal_loss = alpha_t * ((1 - p_t) ** self.gamma) * ce_loss
-
-#         # Apply reduction
-#         if self.reduction == 'mean':
-#             return focal_loss.mean()
-#         elif self.reduction == 'sum':
-#             return focal_loss.sum()
-#         else:
-#             return focal_loss
-
 class FocalLoss(nn.Module):
     def __init__(self, alpha=None, gamma=2.0, reduction='mean', epsilon=1e-6):
         """
         Args:
-            alpha (float or Tensor): Trọng số cho các lớp. Nếu là số, áp dụng đồng đều cho tất cả các lớp.
-                                     Nếu là Tensor, kích thước phải khớp với số lớp.
-            gamma (float): Tham số điều chỉnh trọng số cho các mẫu dễ và khó.
-            reduction (str): Chế độ giảm loss, hỗ trợ 'mean', 'sum', và 'none'.
-            epsilon (float): Tránh log(0) hoặc chia cho 0.
+            alpha (float or Tensor): Weight for each class. If a number, apply evenly to all classes.
+                                     If a Tensor, the size must match the number of classes.
+            gamma (float): Weight adjustment parameter for easy and hard samples.
+            reduction (str): Loss reduction mode, supports 'mean', 'sum', and 'none'.
+            epsilon (float): Avoid log(0) or division by 0.
         """
         super(FocalLoss, self).__init__()
         if alpha is not None and not isinstance(alpha, (float, torch.Tensor)):
@@ -339,7 +296,7 @@ class FocalLoss(nn.Module):
         # Handle alpha (class weights)
         if self.alpha is not None:
             if isinstance(self.alpha, torch.Tensor):
-                # Chỉ lấy trọng số cho các lớp xuất hiện trong batch
+                # Only take weights for classes appearing in the batch
                 valid_classes = torch.unique(targets)
                 alpha_t = self.alpha[targets]
             else:
@@ -368,7 +325,6 @@ class CenterLoss(nn.Module):
 
     def forward(self, features, labels):
         batch_size = features.size(0)
-        centers_batch = self.centers[labels]  # Chọn prototype của mỗi class
+        centers_batch = self.centers[labels]  # Select prototypes for each class
         loss = (features - centers_batch).pow(2).sum() / 2.0 / batch_size
         return loss
-

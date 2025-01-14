@@ -1,10 +1,11 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from einops import rearrange, reduce, repeat
 from einops.layers.torch import Rearrange, Reduce
 from torchvision.transforms import Compose, Resize, ToTensor
 from torch import Tensor
+
+import torch.nn as nn
+import torch.nn.functional as F
     
 class PatchEmbedding(nn.Module):
     def __init__(self, in_channels: int = 3, patch_size: int = 4, emb_size: int = 128, img_size: int = 32):
@@ -123,7 +124,7 @@ class CEViT(nn.Module):
                 **kwargs):
         super(CEViT, self).__init__()
         
-        # Patch embedding: chia ảnh thành các patch và tạo embedding
+        # Patch embedding: split the image into patches and create embeddings
         self.patch_embedding = PatchEmbedding(in_channels, patch_size, emb_size, img_size)
         
         # Transformer encoder
@@ -139,13 +140,10 @@ class CEViT(nn.Module):
         # Transformer Encoder
         x = self.transformer_encoder(x)
         
-        # Sử dụng token CLS từ Transformer Encoder
-        cls_token = x[:, 0]  # Token CLS nằm ở đầu
+        # Use the CLS token from the Transformer Encoder
+        cls_token = x[:, 0]  # The CLS token is located at the beginning
         if return_embeddings:
-            return cls_token  # Trả về embeddings
+            return cls_token  # Return the embeddings
 
         # Classification head
         return self.classifier_head(x)
-
-
-        

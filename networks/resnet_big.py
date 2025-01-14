@@ -201,17 +201,6 @@ class CEResNet(nn.Module):
         return self.encoder(x)
         # return self.fc(self.encoder(x))
 
-
-# class LinearClassifier(nn.Module):
-#     """Linear classifier"""
-
-#     def __init__(self, name='resnet50', num_classes=5):
-#         super(LinearClassifier, self).__init__()
-#         _, feat_dim = model_dict[name]
-#         self.fc = nn.Linear(feat_dim, num_classes)
-
-#     def forward(self, features):
-#         return self.fc(features)
 class LinearClassifier(nn.Module):
     """Linear classifier"""
 

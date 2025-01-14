@@ -1,21 +1,6 @@
-**(1) Last run**
-```
- -------ADAM---------
-  python3 main_unicon_v2.py --batch_size 128 --learning_rate 0.001 --temp 0.07 --cosine --warm --n_classes 7 --dataset ROAD --trial road_fab_adamw_v2 --data_folder ./data/road/preprocessed/fab_multi/TFRecord_w32_s8/2 --epochs 100 --optimizer AdamW --save_freq 2 > ./save/cmd_save/100_epoch_ROAD_AdamW_v2.log
-  
- -------SGD---------
-  python3 main_unicon_v2.py --batch_size 128 --learning_rate 0.005 --temp 0.07 --cosine --warm --n_classes 7 --dataset ROAD --trial road_fab_sgd --data_folder ./data/road/preprocessed/fab_multi/TFRecord_w32_s8/2 --epochs 100 --optimizer SGD --save_freq 1 > ./save/cmd_save/100_epoch_ROAD_SGD.log
-```
-
-**(2) CAN 100 epochs - Using CAN ID + CAN DATA > (Binary)**
-```
-  python3 main_unicon_v2.py --batch_size 64 --learning_rate 0.05 --temp 0.1 --cosine --warm --n_classes 5 --dataset CAN --trial can_v2 --data_folder ./data/Car-Hacking/all_features/v2/TFRecord_w32_
-  s32/2 --epochs 100 > ./save/cmd_save/100_epoch_CAN.log &
-```
 
 **(9) CAN-ML 200 epochs**
 ```
-
   python3 main_unicon_v2.py --batch_size 128 --learning_rate 0.0002 --optimizer AdamW --temp 0.07 --cosine --warm --n_classes 10 --dataset CAN-ML --trial can_ml_200 --data_folder ./data/can-ml/preprocessed/2017-subaru-forester/all_features_v2/TFRecord_w32_s16/2 --epochs 200 > ./save/cmd_save/200_epoch_CAN_ML.log &
 
   Continue:
@@ -81,7 +66,7 @@
 
 
 python3 preprocessing_can_ml_enet.py --window_size=64 --strided=32
-/home/hieutt/UniCon/data/can-ml/2011-chevrolet-impala/preprocessed/all_features_30/TFRecord_w64_s32
+
 python3 train_test_split_all.py --data_path ./data/can-ml/2011-chevrolet-impala/preprocessed/all_features_30 --window_size 64 --strided 32 --rid 2
   /home/hieutt/UniCon/data/can-ml/2011-chevrolet-impala/preprocessed/size_64_10/TFRecord_w64_s32/2
   python main_ce.py --batch_size 64 --learning_rate 0.05 --cosine --warm --n_classes 10 --dataset CAN-ML --trial can_ml_ce_64_2011 --data_folder ./data/can-ml/2011-chevrolet-impala/preprocessed/size_64_10/TFRecord_w64_s32/2 --epochs 100 > ./save/cmd_save/100_epoch_CAN_ML_CE_64_2011.log &

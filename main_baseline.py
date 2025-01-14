@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import argparse
 import math
 import os
@@ -9,9 +8,6 @@ import time
 import numpy as np
 from tqdm import tqdm
 import torch
-import torch.optim as optim
-import torch.backends.cudnn as cudnn
-import torchvision.transforms.functional as F
 import pprint
 from dataset import CANDatasetEnet as CANDataset
 from networks.rec_cnn import RecCNN
@@ -22,6 +18,11 @@ from util import warmup_learning_rate
 from util import save_model ,load_checkpoint
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
 from torch.utils.tensorboard import SummaryWriter
+
+import torch.optim as optim
+import torch.backends.cudnn as cudnn
+import torchvision.transforms.functional as F
+
 def parse_option():
     parser = argparse.ArgumentParser('argument for training')
 
@@ -158,7 +159,6 @@ def set_model(opt):
     criterion = criterion.to(opt.device)
     criterion_validate = criterion_validate.to(opt.device)
 
-    # print('Model device: ', next(model.parameters()).device)
     return model, criterion, criterion_validate
 
 optimize_dict = {
@@ -205,29 +205,26 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, step):
         step += 1
         data_time.update(time.time() - end)
         
-        # Đưa dữ liệu vào thiết bị (GPU/CPU)
+        # Move data to device (GPU/CPU)
         images = images.to(opt.device, non_blocking=True)
         labels = labels.to(opt.device, non_blocking=True)
         bsz = labels.shape[0]
 
-        # Điều chỉnh learning rate (nếu cần)
         warmup_learning_rate(opt, epoch, idx, len(train_loader), optimizer)
 
-        # Tiến hành truyền dữ liệu qua mô hình
-        outputs = model(images)  # Phân loại trực tiếp từ mô hình
+        # Forward pass
+        outputs = model(images) 
 
-        # Tính toán Cross-Entropy Loss
+        # Compute Cross-Entropy Loss
         loss = criterion(outputs, labels)
-
-        # Cập nhật metric
         losses.update(loss.item(), bsz)
 
-        # Thực hiện bước tối ưu hóa
+        # Perform optimization step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        # Đo thời gian và in thông tin
+        # Measure time and print information
         batch_time.update(time.time() - end)
         end = time.time()
         if (idx + 1) % opt.print_freq == 0:
@@ -269,17 +266,14 @@ def validate(val_loader, model, criterion, opt):
             
             pred = get_predict(outputs)
 
-            # total_pred = np.concatenate((total_pred, pred), axis=0)
-            # total_label = np.concatenate((total_label, labels), axis=0)
-            # Nếu `pred` đã là NumPy array, không cần gọi `.cpu()` nữa
             if isinstance(pred, torch.Tensor):
                 pred = pred.cpu().numpy()
             
-            # Chuyển đổi `labels` sang NumPy nếu cần
+            # Convert `labels` to NumPy if needed
             if isinstance(labels, torch.Tensor):
                 labels = labels.cpu().numpy()
 
-            # Cập nhật các giá trị tổng
+            # Update total values
             total_pred = np.concatenate((total_pred, pred), axis=0)
             total_label = np.concatenate((total_label, labels), axis=0)
     

@@ -95,7 +95,6 @@ def write_tfrecord(dataset, tfwriter):
         
         for x, y in zip(features, labels):
             tfwriter.write(x, y)  # Write the feature and label pair
-
             
 def train_test_split(**args):
     """
@@ -146,8 +145,7 @@ def train_test_split(**args):
         
     print('Total training: ', total_train_size)
     print('Total validation: ', total_val_size)
-    
-            
+     
 if __name__ == '__main__':
     # Parse argument
     parser = argparse.ArgumentParser()

@@ -9,16 +9,14 @@ import numpy as np
 from tqdm import tqdm
 import pprint
 from torchvision import transforms
-import torch.nn.functional as F
-
-# from dataset import CANDatasetEnet as CANDataset
 from dataset import CANDataset
-from losses import UniConLoss ,FocalLoss, CenterLoss
+from losses import UniConLoss, CenterLoss
 from networks.resnet_big import ConResNet, LinearClassifier
 from util import AverageMeter, save_model, get_universum, TwoCropTransform, AddGaussianNoise
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix, accuracy_score
 from torch.utils.tensorboard import SummaryWriter
 
+import torch.nn.functional as F
 
 # === ARGUMENT PARSER === #
 def parse_option():
@@ -82,7 +80,6 @@ def set_model(opt):
     checkpoint_path = os.path.join(opt.trained_model_path, 'ckpt_epoch_37.pth')
     checkpoint = torch.load(checkpoint_path, map_location=opt.device, weights_only=False)
     # model.load_state_dict(checkpoint['model'])
-         # Xử lý load state_dict với strict=False
     try:
         model.load_state_dict(checkpoint['model'], strict=False)
     except RuntimeError as e:
@@ -151,22 +148,22 @@ def episodic_training(train_loader, model, optimizer, opt, n_classes, n_way, k_s
     model.train()
     losses = AverageMeter()
     
-    batch_time = AverageMeter()  # Thời gian xử lý mỗi episode
-    data_time = AverageMeter()   # Thời gian xử lý dữ liệu
+    batch_time = AverageMeter()  # Time taken for each episode
+    data_time = AverageMeter()   # Time taken for data processing
     
-    end = time.time()  # Bắt đầu đo thời gian
+    end = time.time()  # Start timing
 
     for episode in range(len(train_loader)):
         data_time.update(time.time() - end) 
         
-        # Tạo batch Few-Shot
+        # Create Few-Shot batch
         few_shot_batch = create_few_shot_batch(train_loader.dataset, n_way, k_shot)
         
         if len(few_shot_batch) == 0:
             print("Few-shot batch is empty. Skipping episode.")
             continue
 
-        # Chuẩn hóa và kiểm tra batch
+        # Normalize and check the batch
         corrected_batch = []
         for i, (data, label) in enumerate(few_shot_batch):
             if isinstance(data, (list, tuple)):
@@ -178,11 +175,11 @@ def episodic_training(train_loader, model, optimizer, opt, n_classes, n_way, k_s
             else:
                 raise ValueError(f"Unexpected type for data: {type(data)}")
 
-        # Tách images và labels
+        # Separate images and labels
         images = torch.stack([item[0] for item in corrected_batch])
         labels = torch.tensor([item[1] for item in corrected_batch])
 
-        # Chuyển dữ liệu sang thiết bị
+        # Move data to device
         images = images.to(opt.device)
         labels = labels.to(opt.device)
 
@@ -218,12 +215,12 @@ def episodic_training(train_loader, model, optimizer, opt, n_classes, n_way, k_s
         loss.backward()
         optimizer.step()
 
-        # Cập nhật loss và thời gian
+        # Update loss and time
         losses.update(loss.item(), labels.size(0))
         batch_time.update(time.time() - end)
         end = time.time()
 
-        # Log thông tin mỗi episode
+        # Log episode information
         if (episode + 1) % opt.print_freq == 0:
             print(
                 f"Episode: [{episode + 1}/{len(train_loader)}]\t"
@@ -264,7 +261,7 @@ def train_encoder(train_loader, model, criterion, optimizer, epoch, opt):
         loss = criterion(features, uni_features, labels)
         losses.update(loss.item(), bsz)
 
-        # Backward pass và optimization   
+        # Backward pass and optimization   
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()

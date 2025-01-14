@@ -11,8 +11,7 @@ import pprint
 from torchvision import transforms
 import torch.nn.functional as F
 
-from dataset import CANDatasetOld as CANDataset
-from losses import CenterLoss
+from dataset import CANDatasetStandard as CANDataset
 from networks.resnet_big import CEResNet
 from util import AverageMeter, save_model, TwoCropTransform, AddGaussianNoise
 from sklearn.metrics import f1_score, precision_score, recall_score, confusion_matrix, accuracy_score

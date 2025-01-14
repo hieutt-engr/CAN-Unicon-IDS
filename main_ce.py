@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from networks.resnet_big import CEResNet
 from util import AverageMeter, TwoCropTransform, AddGaussianNoise
-from util import adjust_learning_rate, warmup_learning_rate, accuracy
+from util import adjust_learning_rate
 from util import set_optimizer, save_model
 from torch.utils.tensorboard import SummaryWriter
 
@@ -130,9 +130,6 @@ def set_model(opt):
     model = CEResNet(name=opt.model, num_classes=opt.n_classes)
     criterion = torch.nn.CrossEntropyLoss()
 
-    # if torch.cuda.is_available():
-    #     if torch.cuda.device_count() > 1:
-    #         model = torch.nn.DataParallel(model)
     model = model.to(opt.device)
     criterion = criterion.to(opt.device)
     # cudnn.benchmark = True
@@ -156,18 +153,14 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, step):
         images = torch.cat([images[0], images[1]], dim=0)
         labels = torch.cat([labels, labels], dim=0)
 
-        # images = images.cuda(non_blocking=True)
-        # labels = labels.cuda(non_blocking=True)
         images = images.to(opt.device, non_blocking=True)
         labels = labels.to(opt.device, non_blocking=True)
         bsz = labels.shape[0]
 
-        # with torch.no_grad():
         output = model(images)
         loss = criterion(output, labels)
         # update metric
         losses.update(loss.item(), bsz)
-        # acc = accuracy(output, labels)
 
         # SGD
         optimizer.zero_grad()
@@ -211,8 +204,6 @@ def validate(val_loader, model, criterion, opt):
         for images, labels in tqdm(val_loader):
             images = images.float().to(opt.device, non_blocking=True)
             labels = labels.to(opt.device, non_blocking=True)
-            # images = images.float().cuda()
-            # labels = labels.cuda()
             bsz = labels.shape[0]
 
             # forward

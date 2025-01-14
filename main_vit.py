@@ -240,9 +240,6 @@ def validate(val_loader, model, criterion, opt):
     
     with torch.no_grad():
         for images, labels in tqdm(val_loader): 
-            # if torch.cuda.is_available():
-            #     images = images.cuda(non_blocking=True)
-            #     labels = labels.cuda(non_blocking=True)
             images = images.to(opt.device, non_blocking=True)
             labels = labels.to(opt.device, non_blocking=True)
             outputs = model(images)

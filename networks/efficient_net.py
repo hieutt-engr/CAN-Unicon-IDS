@@ -1,18 +1,8 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
 
-# efficientnet_model_dict = {
-#     'efficientnet-b0': [lambda: EfficientNet.from_name('efficientnet-b0'), 1280],
-#     'efficientnet-b1': [lambda: EfficientNet.from_name('efficientnet-b1'), 1280],
-#     'efficientnet-b2': [lambda: EfficientNet.from_name('efficientnet-b2'), 1408],
-#     'efficientnet-b3': [lambda: EfficientNet.from_name('efficientnet-b3'), 1536],
-#     'efficientnet-b4': [lambda: EfficientNet.from_name('efficientnet-b4'), 1792],
-#     'efficientnet-b5': [lambda: EfficientNet.from_name('efficientnet-b5'), 2048],
-#     'efficientnet-b6': [lambda: EfficientNet.from_name('efficientnet-b6'), 2304],
-#     'efficientnet-b7': [lambda: EfficientNet.from_name('efficientnet-b7'), 2560],
-# }
+import torch.nn as nn
+import torch.nn.functional as F
 
 class EfficientNet_Embedding(nn.Module):
     def __init__(self, embedding_dim=1792, pretrained=True):
@@ -26,11 +16,11 @@ class EfficientNet_Embedding(nn.Module):
             3, 48, kernel_size=3, stride=1, padding=1, bias=False
         )
         
-        # Thay đổi global pooling để phù hợp với ảnh nhỏ
+        # Change global pooling to fit small images
         self.efficientnet._avg_pooling = nn.AdaptiveAvgPool2d(1)
         
         # Fully connected layer to reduce dimensionality
-        self.fc = nn.Linear(1792, embedding_dim)  # Output của EfficientNet-B4 là 1792
+        self.fc = nn.Linear(1792, embedding_dim)  # Output of EfficientNet-B4 is 1792
 
     def forward(self, x):
         # Input x: [batch_size, channels, 32, 32]
