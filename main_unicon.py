@@ -451,7 +451,7 @@ def main():
 
         class_epoch = epoch - opt.epoch_start_classifier + 1
         # Train and validate classifier 
-        if epoch % opt.save_freq == 0:
+        if epoch > class_epoch:
             print("Classifier...")
             adjust_learning_rate(opt, optimizer_classifier, epoch, '_classifier')
             new_step, loss_ce, train_acc = train_classifier(train_classifier_loader, model, classifier, 
@@ -486,10 +486,10 @@ def main():
         if epoch % opt.save_freq == 0:
             save_file = os.path.join(opt.save_folder, f'ckpt_epoch_{epoch}.pth')
             save_model(model, optimizer, opt, epoch, save_file)
-
-            ckpt = 'ckpt_class_epoch_{}.pth'.format(epoch)
-            save_file = os.path.join(opt.save_folder, ckpt)
-            save_model(classifier, optimizer_classifier, opt, epoch, save_file)
+            if epoch > class_epoch:
+                ckpt = 'ckpt_class_epoch_{}.pth'.format(epoch)
+                save_file = os.path.join(opt.save_folder, ckpt)
+                save_model(classifier, optimizer_classifier, opt, epoch, save_file)
     
     save_file = os.path.join(
         opt.save_folder, 'last.pth')

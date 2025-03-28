@@ -1,54 +1,90 @@
 # UniCon: Universum-inspired Supervised Contrastive Learning
 
 
-## Running
+## Train
 
 **(1) UniCon EfficientNet**
-
 ```
 python main_unicon_efficient_net.py --batch_size 64
   --learning_rate 0.05 --temp 0.7
   --cosine --warm
 ```
-**(2) UniCon Resnet**
 
+**(2) UniCon Resnet-50**
 ```
 python main_unicon.py --batch_size 64
   --learning_rate 0.05 --temp 0.7
   --cosine --warm
 ```
 
-You can change Mixup parameter with `--lamda 0.5`. Or you can use CutMix with `--mix cutmix`.    
-
-**(2) SupMix**  
+**(3) Cross Entropy Baseline**
 ```
-python main_supmix.py --batch_size 256
-  --learning_rate 0.05 --temp 0.1
-  --cosine --warm --beta --lamda 0.5
+python main_baseline.py --batch_size 64
+  --model [rec_cnn, lstm_cnn]
+  --learning_rate 0.05
+  --cosine --warm
 ```
-Here `--lamda` is used in distribution Beta(lambda, lambda). You can also set lambda to a constant by reducing
-`--beta`.  
 
-**(3) Cross Entropy**
-
+**(4) Cross Entropy Resnet-50**
 ```
-python main_ce.py --batch_size 1024
+python main_ce.py --batch_size 128
   --learning_rate 0.8
   --cosine
 ```
-You can use `--augment`, `--mixup --alpha 0.5`, `--cutmix --alpha 0.5 --cutmix_prob 0.5` to enable augmentations, 
-Mixup and CutMix, respectively. Please note that Mixup and CutMix cannot be applied together. If so, only Mixup is 
-used.  
 
+## Transfer learning
+**(1) Transfer CAN-ML Unicon Resnet 20 epochs**
+```
+python transfer.py     
+  --trained_model_path ./save/CAN-ML_models
+  --data_folder
+  --n_classes 10
+```
 
-**(8) Preprocessing CAN_ML dataset**
+**(2) Transfer CAN-ML CE Resnet 20 epochs**
 ```
-python3 preprocessing_can_ml.py --window_size=64 --strided=32 > data_preprocessing_can_ml.txt
+  python transfer_ce.py 
+    --trained_model_path ./save/CAN-ML_models 
+    --data_folder ./data/can-ml/2011-chevrolet-impala/preprocesse 
+    --version v1_CE_resnet 
+    --n_classes 10
 ```
 
-**(9) Train/Val Split**
+**(3) Transfer CAN-ML LSTM-CNN 20 epochs**
 ```
-python3 train_test_split_all.py --data_path ./data/can-ml/2017-subaru-forester/preprocessed --window_size 64 --strided 32 --rid 2
+python transfer_baseline.py  
+  --model lstm_cnn 
+  --trained_model_path ./save/CAN-ML_models
+  --data_folder ./data/can-ml/2011-chevrolet-impala/preprocessed
+  --version v1_lstm_cnn
+  --n_classes 10
+```
+
+**(4) Transfer CAN-ML Rec-cnn 20 epochs**
+```
+python transfer_baseline.py  
+  --model rec_cnn 
+  --trained_model_path ./save/CAN-ML_models
+  --data_folder ./data/can-ml/2011-chevrolet-impala/preprocessed
+  --version v1_rec_cnn
+  --n_classes 10
+```
+
+## Preprocessing and Train, Test split
+**(1) Preprocessing CAN_ML dataset**
+```
+python3 preprocessing_can_ml.py 
+  --window_size=64 
+  --strided=32
+```
+
+**(2) Train/Val Split**
+```
+python3 train_test_split_all.py 
+  --data_path ./data/can-ml/2017-subaru-forester/preprocessed 
+  --window_size 64 
+  --strided 32 
+  --rid 2
 ```
 
 ## Reference

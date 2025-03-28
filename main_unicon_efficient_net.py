@@ -35,7 +35,7 @@ def parse_option():
                         help='batch_size')
     parser.add_argument('--num_workers', type=int, default=8,
                         help='num of workers to use')
-    parser.add_argument('--epochs', type=int, default=50,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='number of training epochs')
     parser.add_argument('--resume', type=str, default=None, 
                         help='path to the checkpoint to resume from')
@@ -52,7 +52,7 @@ def parse_option():
     parser.add_argument('--momentum', type=float, default=0.9,
                         help='momentum')
     # optimization classifier
-    parser.add_argument('--epoch_start_classifier', type=int, default=50)
+    parser.add_argument('--epoch_start_classifier', type=int, default=90)
     parser.add_argument('--learning_rate_classifier', type=float, default=0.01,
                         help='learning rate classifier')
     parser.add_argument('--lr_decay_epochs_classifier', type=str, default='60,75,90',
@@ -176,8 +176,7 @@ def set_model(opt):
 
     classifier = LinearClassifier(input_dim=1792, num_classes=opt.n_classes)
     criterion_classifier = torch.nn.CrossEntropyLoss()
-    # class_weights = torch.tensor([0.112, 3.792, 13.626, 16.644, 41.333, 2.510, 13.191, 10.508, 18.235, 21.197], dtype=torch.float32).to(opt.device)
-    # criterion_classifier = FocalLoss(alpha=class_weights, gamma=2)
+
     if torch.cuda.is_available():
         if torch.cuda.device_count() > 1:
             model.encoder = torch.nn.DataParallel(model.encoder, device_ids=[0])
@@ -191,9 +190,6 @@ def set_model(opt):
 
     print('Model device: ', next(model.parameters()).device)
     return model, criterion, classifier, criterion_classifier
-
-
-
 
 optimize_dict = {
     'SGD' : optim.SGD,
@@ -235,8 +231,6 @@ def train(train_loader, model, criterion, optimizer, epoch, opt, step):
     end = time.time()
 
     for idx, (images, labels) in enumerate(train_loader):
-        # images: a list of length 2，each element being a tensor of size [128, 3, 32, 32]
-        # labels: vector of length 128
         step += 1
         data_time.update(time.time() - end)
 
@@ -437,23 +431,19 @@ def main():
     for epoch in range(start_epoch, opt.epochs + 1):
         print('Begin time: ' + str(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())))
         adjust_learning_rate(opt, optimizer, epoch)
-        # train for one epoch
-        # time1 = time.time()
+
         new_step, train_loss = train(train_loader, model, criterion, optimizer, epoch, opt, step)
-        # time2 = time.time()
 
         print(f'Epoch {epoch}, Unicon Loss {train_loss:.4f}')
         log_writer.write(f'Epoch: {epoch}, Unicon Loss: {train_loss:.4f}\n')
 
         # Train and validate classifier 
-        if epoch % opt.save_freq == 0:
+        if epoch > opt.epoch_start_classifier:
             print("Train Classifier...")
             adjust_learning_rate(opt, optimizer_classifier, epoch, '_classifier')
             new_step, loss_ce, train_acc = train_classifier(train_classifier_loader, model, classifier, 
                                                             criterion_classifier, optimizer_classifier, epoch, opt, step, logger)
             pp = pprint.PrettyPrinter(indent=4)
-            # print('Train Classifier: Loss: {:.4f}, Acc: {}'.format(loss_ce, train_acc))
-            # Log results
             log_writer.write('Classifier: Loss: {:.4f}, Acc: {}\n'.format(loss_ce, train_acc))
             print("Validation Classifier...")
             loss, val_acc, val_f1, precision, recall, conf_matrix = validate(test_loader, model, classifier, criterion_classifier, opt)
@@ -483,10 +473,10 @@ def main():
         if epoch % opt.save_freq == 0:
             save_file = os.path.join(opt.save_folder, f'ckpt_epoch_{epoch}.pth')
             save_model(model, optimizer, opt, epoch, save_file)
-
-            ckpt = 'ckpt_class_epoch_{}.pth'.format(epoch)
-            save_file = os.path.join(opt.save_folder, ckpt)
-            save_model(classifier, optimizer_classifier, opt, epoch, save_file)
+            if epoch > opt.epoch_start_classifier:
+                ckpt = 'ckpt_class_epoch_{}.pth'.format(epoch)
+                save_file = os.path.join(opt.save_folder, ckpt)
+                save_model(classifier, optimizer_classifier, opt, epoch, save_file)
     
     save_file = os.path.join(
         opt.save_folder, 'last.pth')

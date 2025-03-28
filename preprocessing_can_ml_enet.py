@@ -66,26 +66,26 @@ def normalize_time_zscore(time_series):
     return normalized
 
 
-def normalize_timestamp(timestamp):
-    """
-    Normalize timestamp using delta time and Min-Max scaling.
+# def normalize_timestamp(timestamp):
+#     """
+#     Normalize timestamp using delta time and Min-Max scaling.
 
-    Args:
-        timestamp (numpy.ndarray): Array of timestamp values.
+#     Args:
+#         timestamp (numpy.ndarray): Array of timestamp values.
 
-    Returns:
-        numpy.ndarray: Normalized representation of timestamp values.
-    """
-    # Step 1: Tính delta time
-    delta_time = timestamp - timestamp[0]  # Tính khoảng thời gian so với giá trị đầu tiên
+#     Returns:
+#         numpy.ndarray: Normalized representation of timestamp values.
+#     """
+#     # Step 1: Tính delta time
+#     delta_time = timestamp - timestamp[0]  # Tính khoảng thời gian so với giá trị đầu tiên
     
-    # Step 2: Min-Max Scaling
-    min_val = np.min(delta_time)
-    max_val = np.max(delta_time)
-    scaled = (delta_time - min_val) / (max_val - min_val)  # Chuẩn hóa giá trị trong khoảng [0, 1]
+#     # Step 2: Min-Max Scaling
+#     min_val = np.min(delta_time)
+#     max_val = np.max(delta_time)
+#     scaled = (delta_time - min_val) / (max_val - min_val)  # Chuẩn hóa giá trị trong khoảng [0, 1]
     
-    # Step 3: Trả về giá trị đã chuẩn hóa (float)
-    return scaled
+#     # Step 3: Trả về giá trị đã chuẩn hóa (float)
+#     return scaled
 
 def serialize_example(x, y): 
     """converts x, y to tf.train.Example and serialize"""
@@ -160,8 +160,7 @@ def split_data(file_name, attack_id, window_size, strided_size, target_size=64):
 
     df['id_seq'] = df['id_seq'].apply(lambda x: reshape_to_target_size([item for sublist in x for item in sublist], target_size))
     df['data_seq'] = df['data_seq'].apply(lambda x: reshape_to_target_size([item for sublist in x for item in sublist], target_size))
-    # df['timestamp'] = df['timestamp'].apply(lambda x: parse_and_stack_timestamps(x, target_size))
-    df['timestamp'] = df['timestamp'].apply(lambda x: reshape_to_target_size(x, target_size))
+    df['timestamp'] = df['timestamp'].apply(lambda x: parse_and_stack_timestamps(x, target_size))
     return df[['id_seq', 'data_seq', 'timestamp', 'label']].reset_index().drop(['index'], axis=1)
 
 
