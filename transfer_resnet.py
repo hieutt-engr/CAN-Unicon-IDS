@@ -23,7 +23,7 @@ def parse_option():
     parser = argparse.ArgumentParser('argument for training')
     parser.add_argument('--print_freq', type=int, default=100,
                         help='print frequency')
-    parser.add_argument('--batch_size', type=int, default=64, help='batch_size')
+    parser.add_argument('--batch_size', type=int, default=32, help='batch_size')
     parser.add_argument('--num_workers', type=int, default=8, help='num of workers')
     parser.add_argument('--epochs', type=int, default=50, help='number of training epochs')
     parser.add_argument('--learning_rate', type=float, default=0.005, help='learning rate')

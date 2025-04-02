@@ -33,19 +33,32 @@ python main_ce.py --batch_size 128
 ```
 
 ## Transfer learning
-**(1) Transfer CAN-ML Unicon Resnet 20 epochs**
+**(1) Transfer CAN-ML E-UniCon 20 epochs**
 ```
 python transfer.py     
   --trained_model_path ./save/CAN-ML_models
-  --data_folder
+  --data_folder ./data/can-ml/2011-chevrolet-impala/preprocessed
+  --version v1
   --n_classes 10
+```
+
+**(1) Transfer CAN-ML UniCon Resnet 20 epochs**
+```
+python transfer_resnet.py     
+  --trained_model_path ./save/CAN-ML_models
+  --data_folder ./data/can-ml/2011-chevrolet-impala/preprocessed/size_64_10/TFRecord_w64_s32/2
+  --version v1
+  --n_classes 10
+
+python transfer_resnet.py --trained_model_path ./save/CAN-ML_models/UniCon/UniCon_CAN-ML_resnet50_lr_0.05_decay_0.0001_bsz_64_temp_0.07_mixup_lambda_0.5_trial_can_ml_uni_resnet_cosine_warm --data_folder ./data/can-ml/2011-chevrolet-impala/preprocessed/size_64_10/TFRecord_w64_s32/2 --version v1 --n_classes 10 > ./save/cmd_save/transfer_unicon_resnet_2011.log
+
 ```
 
 **(2) Transfer CAN-ML CE Resnet 20 epochs**
 ```
   python transfer_ce.py 
     --trained_model_path ./save/CAN-ML_models 
-    --data_folder ./data/can-ml/2011-chevrolet-impala/preprocesse 
+    --data_folder ./data/can-ml/2011-chevrolet-impala/preprocessed
     --version v1_CE_resnet 
     --n_classes 10
 ```
